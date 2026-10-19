@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F5DE98" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#8A6818" />
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="#0B0A10" stroke="#D4AF37" stroke-width="2.5" />
+  <path d="M50 16 L56 38 L78 38 L60 52 L67 74 L50 60 L33 74 L40 52 L22 38 L44 38 Z" fill="url(#goldGlow)" />
+  <circle cx="50" cy="50" r="6" fill="#FFF8E7" opacity="0.9" />
+</svg>
