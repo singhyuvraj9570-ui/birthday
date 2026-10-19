@@ -90,7 +90,7 @@ export const AmbientSoundtrack: React.FC<AmbientSoundtrackProps> = ({ isAutoplay
         </div>
 
         <span className="text-xs font-medium tracking-wider text-cream-200 hidden sm:inline-block">
-          {isPlaying ? "Music Playing" : "Play Music"}
+          {isPlaying ? "Birthday Melody 🎵" : "Play Birthday Music"}
         </span>
 
         {isPlaying && (

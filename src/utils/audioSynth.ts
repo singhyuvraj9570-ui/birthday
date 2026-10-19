@@ -1,8 +1,35 @@
 /**
  * Web Audio Ambient Music Synthesizer
- * Generates an enchanting, cinematic ambient piano / music box melody
- * completely offline with zero external audio assets needed.
+ * Plays an enchanting, emotional music box & warm piano arrangement
+ * of "Happy Birthday to You" with accompaniment chords and celestial sound effects.
  */
+
+interface ScoreNote {
+  freq: number;
+  duration: number; // in beats (1 beat = ~540ms)
+  chord?: number[];  // Accompaniment harmony frequencies
+}
+
+// Frequencies (Hz)
+const G2 = 98.00;
+const C3 = 130.81;
+const F2 = 87.31;
+const G3 = 196.00;
+const A3 = 220.00;
+const B3 = 246.94;
+const C4 = 261.63;
+const D4 = 293.66;
+const E4 = 329.63;
+const F4 = 349.23;
+const G4 = 392.00;
+const A4 = 440.00;
+const B4 = 493.88;
+const C5 = 523.25;
+const D5 = 587.33;
+const E5 = 659.25;
+const F5 = 698.46;
+const G5 = 783.99;
+const C6 = 1046.50;
 
 class AmbientMusicEngine {
   private ctx: AudioContext | null = null;
@@ -10,33 +37,59 @@ class AmbientMusicEngine {
   private timer: number | null = null;
   private masterGain: GainNode | null = null;
   private noteIndex: number = 0;
+  private readonly beatDurationMs: number = 520; // ~115 BPM 3/4 tempo
 
-  // Romantic Pentatonic Chord Progression in C/G/Am/F
-  private melodyNotes: number[] = [
-    261.63, // C4
-    329.63, // E4
-    392.00, // G4
-    523.25, // C5
-    440.00, // A4
-    392.00, // G4
-    329.63, // E4
-    293.66, // D4
-    349.23, // F4
-    440.00, // A4
-    523.25, // C5
-    659.25, // E5
-    587.33, // D5
-    493.88, // B4
-    392.00, // G4
-    329.63  // E4
+  // The beloved "Happy Birthday to You" score with lush music-box chords
+  private birthdayScore: ScoreNote[] = [
+    // Phrase 1: "Happy Birthday to You"
+    { freq: G4, duration: 0.75 },
+    { freq: G4, duration: 0.25 },
+    { freq: A4, duration: 1.0 },
+    { freq: G4, duration: 1.0 },
+    { freq: C5, duration: 1.0, chord: [C3, G3, E4] },
+    { freq: B4, duration: 2.0 },
+
+    // Phrase 2: "Happy Birthday to You"
+    { freq: G4, duration: 0.75 },
+    { freq: G4, duration: 0.25 },
+    { freq: A4, duration: 1.0 },
+    { freq: G4, duration: 1.0 },
+    { freq: D5, duration: 1.0, chord: [G2, D4, B4] },
+    { freq: C5, duration: 2.0 },
+
+    // Phrase 3: "Happy Birthday Dear [Special One]"
+    { freq: G4, duration: 0.75 },
+    { freq: G4, duration: 0.25 },
+    { freq: G5, duration: 1.0, chord: [C3, E4, G4] },
+    { freq: E5, duration: 1.0 },
+    { freq: C5, duration: 1.0 },
+    { freq: B4, duration: 1.0 },
+    { freq: A4, duration: 2.0, chord: [F2, C4, F4, A4] },
+
+    // Phrase 4: "Happy Birthday to You ✨"
+    { freq: F5, duration: 0.75 },
+    { freq: F5, duration: 0.25 },
+    { freq: E5, duration: 1.0, chord: [C3, G3, E4] },
+    { freq: C5, duration: 1.0 },
+    { freq: D5, duration: 1.0, chord: [G2, D4, B4] },
+    { freq: C5, duration: 2.5, chord: [C3, G3, C4, E4] },
+
+    // Gentle Sparkle Interlude before looping
+    { freq: 0, duration: 0.8 },
+    { freq: E5, duration: 0.5 },
+    { freq: G5, duration: 0.5 },
+    { freq: C6, duration: 1.2, chord: [C3, E4, G4] },
+    { freq: 0, duration: 1.5 } // Poetic breath pause
   ];
 
   public init() {
     if (!this.ctx) {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioContextClass();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(0.38, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') {
@@ -44,48 +97,82 @@ class AmbientMusicEngine {
     }
   }
 
+  // Plays a note with a delicate Swiss music box & warm acoustic chime timbre
+  private playVoice(freq: number, durationBeats: number, isChord: boolean = false) {
+    if (!this.ctx || !this.masterGain || freq <= 0) return;
+
+    const now = this.ctx.currentTime;
+    const noteDurationSec = (durationBeats * this.beatDurationMs) / 1000;
+
+    // 1. Primary fundamental oscillator
+    const osc1 = this.ctx.createOscillator();
+    const gain1 = this.ctx.createGain();
+    osc1.type = isChord ? 'triangle' : 'sine';
+    osc1.frequency.setValueAtTime(freq, now);
+
+    // 2. Bell chime overtone (gives that magical music box sparkle)
+    const osc2 = this.ctx.createOscillator();
+    const gain2 = this.ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq * 2, now); // Octave overtone shimmer
+
+    // 3. Gentle Lowpass filter for dreamy acoustic warmth
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(isChord ? 900 : 2200, now);
+
+    const baseGain = isChord ? 0.08 : 0.22;
+    gain1.gain.setValueAtTime(0.001, now);
+    gain1.gain.linearRampToValueAtTime(baseGain, now + 0.018);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + Math.max(noteDurationSec * 1.5, 1.6));
+
+    gain2.gain.setValueAtTime(0.001, now);
+    gain2.gain.linearRampToValueAtTime(baseGain * 0.35, now + 0.012);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + Math.max(noteDurationSec * 0.8, 0.9));
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain1);
+    gain1.connect(this.masterGain);
+
+    osc1.start(now);
+    osc1.stop(now + 2.5);
+    osc2.start(now);
+    osc2.stop(now + 1.8);
+  }
+
   public play() {
     this.init();
     if (this.isPlaying) return;
     this.isPlaying = true;
 
-    const playNextNote = () => {
+    const playNext = () => {
       if (!this.isPlaying || !this.ctx || !this.masterGain) return;
 
-      const freq = this.melodyNotes[this.noteIndex % this.melodyNotes.length];
+      const current = this.birthdayScore[this.noteIndex % this.birthdayScore.length];
       this.noteIndex++;
 
-      // Create warm oscillator (triangle with gentle sine chime)
-      const osc = this.ctx.createOscillator();
-      const noteGain = this.ctx.createGain();
+      // Play main melody note
+      if (current.freq > 0) {
+        this.playVoice(current.freq, current.duration, false);
+      }
 
-      // Soft tone shaping
-      osc.type = this.noteIndex % 3 === 0 ? 'sine' : 'triangle';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      // Play accompaniment chords if available
+      if (current.chord && current.chord.length > 0) {
+        current.chord.forEach((chordFreq, idx) => {
+          window.setTimeout(() => {
+            if (this.isPlaying) {
+              this.playVoice(chordFreq, current.duration * 1.8, true);
+            }
+          }, idx * 45); // Subtle arpeggiation for realism
+        });
+      }
 
-      // Lowpass filter for dreamy warm sound
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1400, this.ctx.currentTime);
-
-      const now = this.ctx.currentTime;
-      noteGain.gain.setValueAtTime(0.001, now);
-      noteGain.gain.exponentialRampToValueAtTime(0.18, now + 0.12);
-      noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
-
-      osc.connect(filter);
-      filter.connect(noteGain);
-      noteGain.connect(this.masterGain);
-
-      osc.start(now);
-      osc.stop(now + 3.0);
-
-      // Schedule next note with humanized timing
-      const delay = (this.noteIndex % 4 === 0 ? 1200 : 750) + (Math.random() * 80 - 40);
-      this.timer = window.setTimeout(playNextNote, delay);
+      const delay = current.duration * this.beatDurationMs;
+      this.timer = window.setTimeout(playNext, delay);
     };
 
-    playNextNote();
+    playNext();
   }
 
   public pause() {
@@ -105,7 +192,7 @@ class AmbientMusicEngine {
       return false;
     } else {
       if (this.ctx && this.masterGain) {
-        this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+        this.masterGain.gain.setValueAtTime(0.38, this.ctx.currentTime);
       }
       this.play();
       return true;
